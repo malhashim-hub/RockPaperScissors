@@ -8,25 +8,42 @@
 import SwiftUI
 
 struct ContentView: View {
-
+    
     enum Move: String, CaseIterable {
         case rock, paper, scissors
-
+        
+        var title: String {
+            rawValue.capitalized
+        }
+        
+        var beats: Move {
+            switch self {
+            case .rock: return .scissors
+            case .paper: return .rock
+            case .scissors: return .paper
+            }
+        }
+        
+    }
+    
+    enum Outcome: String {
+        case win, lose, tie
+        
         var title: String {
             rawValue.capitalized
         }
     }
-
+    
     @State private var userChoice: Move = .rock
     @State private var computerChoice: Move = Move.allCases.randomElement()!
-    @State private var result: String = ""
+    @State private var result: Outcome = .tie
     @State private var showAlert: Bool = false
     @State private var progress: Int = 0
     @State private var score: Int = 0
     @State private var shouldWin: Bool = Bool.random()
     @State private var showResultAlert: Bool = false
-
-
+    
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -36,19 +53,32 @@ struct ContentView: View {
                     Spacer()
                     Text("Computer chose: \(computerChoice.title)")
                     Text(shouldWin ? "You should win" : "You should lose")
-
-
+                    
+                    
                     VStack(spacing: 50) {
                         ForEach(Move.allCases, id: \.self) { item in
                             Button() {
+                                progress += 1
                                 userChoice = item
                                 result = evaluate(user: userChoice, computer: computerChoice, shouldWin: shouldWin)
+                                
+                                switch result {
+                                case .win:
+                                    score += 1
+                                    
+                                case .lose:
+                                    score = max(0, score - 1)
+                                    
+                                case .tie:
+                                    break
+                                }
+                                
                                 if progress == 10 {
                                     showResultAlert = true
                                 } else {
                                     showAlert = true
                                 }
-
+                                
                             } label: {
                                 Text(item.title)
                             }
@@ -57,9 +87,9 @@ struct ContentView: View {
                             .padding()
                             .background(.mint)
                             .clipShape(Capsule())
-
+                            
                         }
-
+                        
                     }
                     Spacer()
                     Spacer()
@@ -67,13 +97,14 @@ struct ContentView: View {
                     Text("Progress: \(progress)")
                     Spacer()
                 }
-
+                
             }
             .navigationTitle("Rock Paper Scissors")
             .navigationBarTitleDisplayMode(.inline)
-            .alert(result, isPresented: $showAlert) {
+            .alert(result.title, isPresented: $showAlert) {
                 Button("Next") {
                     newRound()
+                    
                 }
             } message: {
                 Text("Computer chose: \(computerChoice.title) \n You chose: \(userChoice.title)")
@@ -83,77 +114,41 @@ struct ContentView: View {
                     score = 0
                     progress = 0
                     newRound()
-
+                    
                 }
             }
         }
     }
-
-    func evaluate(user: Move, computer: Move, shouldWin: Bool) -> String {
-        progress += 1
-
-        if shouldWin {
-            switch (user, computer) {
-            case (.rock, .scissors):
-                score += 1
-                return "You Win"
-            case (.rock, .paper):
-                score = (score == 0) ? 0 : score - 1
-                return "You Lose"
-
-            case (.paper, .rock):
-                score += 1
-                return "You Win"
-            case (.paper, .scissors):
-                score = (score == 0) ? 0 : score - 1
-                return "You Lose"
-
-            case (.scissors, .paper):
-                score += 1
-                return "You Win"
-            case (.scissors, .rock):
-                score = (score == 0) ? 0 : score - 1
-                return "You Lose"
-
-            default:
-                return "It's a Tie"
-
-            }
+    
+    func evaluate(user: Move, computer: Move, shouldWin: Bool) -> Outcome {
+        
+        let real: Outcome
+        if user == computer {
+            real = .tie
+        } else if user.beats == computer {
+            real = .win
         } else {
-            switch (computer, user) {
-            case (.rock, .scissors):
-                score += 1
-                return "You Win"
-            case (.rock, .paper):
-                score = (score == 0) ? 0 : score - 1
-                return "You Lose"
-
-            case (.paper, .rock):
-                score += 1
-                return "You Win"
-            case (.paper, .scissors):
-                score = (score == 0) ? 0 : score - 1
-                return "You Lose"
-
-            case (.scissors, .paper):
-                score += 1
-                return "You Win"
-            case (.scissors, .rock):
-                score = (score == 0) ? 0 : score - 1
-                return "You Lose"
-
-            default:
-                return "It's a Tie"
-
-            }
+            real = .lose
+        }
+        
+        if shouldWin {
+            return real
+        }
+        
+        switch real {
+        case .win: return .lose
+        case .lose: return .win
+        case .tie: return .tie
+            
+            
         }
     }
-
+    
     func newRound() {
         computerChoice = Move.allCases.randomElement()!
         shouldWin = Bool.random()
     }
-
+    
 }
 
 #Preview {
