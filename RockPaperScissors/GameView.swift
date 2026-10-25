@@ -19,13 +19,23 @@ struct GameView: View {
             ZStack {
                 LinearGradient(colors: [.blue, .indigo], startPoint: .top, endPoint: .bottomTrailing)
                     .ignoresSafeArea()
-                VStack() {
+                VStack(spacing: 32) {
                     Spacer()
-                    Text("Computer chose: \(game.computerChoice.title)")
+                    VStack {
+                        Text("Computer chose")
+                            .foregroundStyle(.secondary)
+                            .font(.subheadline)
+                        
+                        Text(game.computerChoice.title)
+                            .font(.largeTitle)
+                    }
+                    
                     Text(game.shouldWin ? "You should win" : "You should lose")
+                        .font(.title).bold()
+                        .foregroundStyle(.white)
                     
                     
-                    VStack(spacing: 50) {
+                    HStack(spacing: 30) {
                         ForEach(Move.allCases, id: \.self) { item in
                             Button() {
                                 game.play(item)
@@ -37,21 +47,26 @@ struct GameView: View {
                                 }
                                 
                             } label: {
-                                Text(item.title)
+                                Text(item.emoji)
                             }
                             .font(.system(size: 50))
                             .foregroundStyle(Color.white)
                             .padding()
+                            .frame(width: 90, height: 90)
                             .background(.mint)
-                            .clipShape(Capsule())
+                            .clipShape(Circle())
                             
                         }
                         
                     }
-                    Spacer()
-                    Spacer()
-                    Text("Score: \(game.score)")
-                    Text("Progress: \(game.progress)")
+                    
+                    
+                    VStack {
+                        Text("Score: \(game.score)")
+                        Text("Round \(game.progress) of \(game.totalRounds)")
+                    }
+                    .font(.footnote)
+                    .opacity(0.75)
                     Spacer()
                 }
                 
@@ -66,11 +81,13 @@ struct GameView: View {
             } message: {
                 Text("Computer chose: \(game.computerChoice.title) \n You chose: \(game.userChoice.title)")
             }
-            .alert("Congratz ur totall score is: \(game.score)", isPresented: $showResultAlert){
+            .alert("Game Over!", isPresented: $showResultAlert){
                 Button("Play again") {
                     game.reset()
                     
                 }
+            } message: {
+                Text("Score is \(game.score) of \(game.totalRounds)")
             }
         }
     }

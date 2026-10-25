@@ -23,6 +23,14 @@ enum Move: String, CaseIterable {
         }
     }
     
+    var emoji: String {
+        switch self {
+        case .rock: return "🪨"
+        case .paper: return "📄"
+        case .scissors: return "✂️"
+        }
+    }
+    
 }
 
 enum Outcome: String {
