@@ -45,7 +45,7 @@ enum Outcome: String {
 class GameModel {
     var userChoice: Move = .rock
     var computerChoice: Move = Move.allCases.randomElement()!
-    var result: Outcome = .tie
+    var result: Outcome? = nil
     var progress: Int = 0
     var score: Int = 0
     var shouldWin: Bool = Bool.random()
@@ -58,6 +58,7 @@ class GameModel {
     func newRound() {
         computerChoice = Move.allCases.randomElement()!
         shouldWin = Bool.random()
+        result = nil
     }
     
     func evaluate() -> Outcome {
@@ -87,9 +88,10 @@ class GameModel {
     func play(_ move: Move){
         progress += 1
         userChoice = move
-        result = evaluate()
+        let outcome = evaluate()
+        result = outcome
         
-        switch result {
+        switch outcome {
         case .win:
             score += 1
             

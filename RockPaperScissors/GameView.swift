@@ -10,7 +10,7 @@ import SwiftUI
 struct GameView: View {
     
     @State private var game = GameModel()
-    @State private var showAlert: Bool = false
+    @State private var isWaiting = false
     @State private var showResultAlert: Bool = false
     
     
@@ -39,13 +39,17 @@ struct GameView: View {
                         ForEach(Move.allCases, id: \.self) { item in
                             Button() {
                                 game.play(item)
-                                
-                                if game.isGameOver {
-                                    showResultAlert = true
-                                } else {
-                                    showAlert = true
+                                isWaiting = true
+                                Task {
+                                    try? await Task.sleep(for: .seconds(1))
+                                    if game.isGameOver {
+                                        game.newRound()
+                                        showResultAlert = true
+                                    } else {
+                                            game.newRound()
+                                    }
+                                    isWaiting = false
                                 }
-                                
                             } label: {
                                 Text(item.emoji)
                             }
@@ -55,11 +59,18 @@ struct GameView: View {
                             .frame(width: 90, height: 90)
                             .background(.mint)
                             .clipShape(Circle())
+                            .disabled(isWaiting)
                             
                         }
                         
                     }
                     
+                    if let result = game.result {
+                            Text(result.title)
+                            .transition(.opacity)
+                            .font(.title2)
+                            .foregroundStyle(result.color)
+                    }
                     
                     VStack {
                         Text("Score: \(game.score)")
@@ -73,25 +84,27 @@ struct GameView: View {
             }
             .navigationTitle("Rock Paper Scissors")
             .navigationBarTitleDisplayMode(.inline)
-            .alert(game.result.title, isPresented: $showAlert) {
-                Button("Next") {
-                    game.newRound()
-                    
-                }
-            } message: {
-                Text("Computer chose: \(game.computerChoice.title) \n You chose: \(game.userChoice.title)")
-            }
             .alert("Game Over!", isPresented: $showResultAlert){
                 Button("Play again") {
-                    game.reset()
-                    
+                        game.reset()
                 }
             } message: {
                 Text("Score is \(game.score) of \(game.totalRounds)")
             }
+            .animation(.easeInOut, value: game.result)
         }
     }
   
+}
+
+extension Outcome {
+    var color: Color {
+        switch self {
+        case .win: return .green
+        case .lose: return .red
+        case .tie: return .orange
+        }
+    }
 }
 
 #Preview {
